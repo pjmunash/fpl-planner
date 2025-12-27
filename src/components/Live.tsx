@@ -146,19 +146,17 @@ const Live: React.FC = () => {
     const points = hasPlayed ? (player.event_points || 0) : null;
     const displayPoints = points === null ? '-' : (pick.is_captain ? points * 2 : pick.is_vice_captain ? points : points);
 
-    // Build stat rows (only show if value exists)
+    // Build stat rows - show gameweek stats (even if 0)
     const stats = [];
     if (hasPlayed) {
-      if (player.minutes > 0) stats.push({ label: 'minutes', value: player.minutes });
-      if (player.goals_scored > 0) stats.push({ label: 'goals', value: player.goals_scored });
-      if (player.assists > 0) stats.push({ label: 'assists', value: player.assists });
-      if (player.clean_sheets > 0) stats.push({ label: 'clean sheet', value: 1 });
-      if (player.tackles > 0) stats.push({ label: 'tackles', value: player.tackles });
-      if (player.interceptions > 0) stats.push({ label: 'interceptions', value: player.interceptions });
-      if (player.own_goals > 0) stats.push({ label: 'own goals', value: player.own_goals });
-      if (player.penalties_saved > 0) stats.push({ label: 'saved', value: player.penalties_saved });
-      if (player.yellow_cards > 0) stats.push({ label: 'yellow', value: player.yellow_cards });
-      if (player.red_cards > 0) stats.push({ label: 'red', value: player.red_cards });
+      stats.push({ label: 'minutes', value: player.minutes || 0 });
+      stats.push({ label: 'goals', value: player.goals_scored || 0 });
+      stats.push({ label: 'assists', value: player.assists || 0 });
+      if (player.clean_sheets) stats.push({ label: 'clean sheet', value: 1 });
+      if (player.yellow_cards) stats.push({ label: 'yellow', value: player.yellow_cards });
+      if (player.red_cards) stats.push({ label: 'red', value: player.red_cards });
+      if (player.own_goals) stats.push({ label: 'own goals', value: player.own_goals });
+      if (player.penalties_saved) stats.push({ label: 'saved', value: player.penalties_saved });
     }
 
     return (

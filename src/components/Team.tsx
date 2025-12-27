@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFPL } from '../context/FPLContext';
 import { formatPrice, getPositionName, getDifficultyColor } from '../utils/helpers';
 import { getTeamShirtUrl } from '../utils/teamShirts';
@@ -6,6 +7,7 @@ import { getTeamShirtUrl } from '../utils/teamShirts';
 type ViewMode = 'field' | 'list';
 
 const Team: React.FC = () => {
+  const navigate = useNavigate();
   const {
     managerData,
     currentPicks,
@@ -39,35 +41,28 @@ const Team: React.FC = () => {
     return map;
   }, [fixtures, selectedGameweek]);
 
-  // Auto-captain suggestion based on fixture difficulty + form
-  const autoCaptainSuggestion = useMemo(() => {
-    if (!picksForView || !selectedGameweek) return null;
-    const startXI = picksForView.picks.slice(0, 11);
-    const playerScores = startXI.map(pick => {
-      const player = getPlayerWithLiveData(pick.element, selectedGameweek);
-      const team = player ? getTeam((player.team || 1) as number) : null;
-      const fixtures = player?.team ? (fixturesForSelectedGWByTeam[player.team] || []) : [];
-      const avgDifficulty = fixtures.length > 0 ? fixtures.reduce((sum: number, f: any) => sum + (5 - f.difficulty), 0) / fixtures.length : 0;
-      const form = parseFloat(player?.form || '0');
-      const score = (form * 2) + (avgDifficulty * 1.5); // Weigh form more heavily
-      return { pick, player, team, score, form, avgDifficulty };
-    });
-    const best = playerScores.reduce((max, p) => p.score > max.score ? p : max);
-    return best && best.score > 0 ? best : null;
-  }, [picksForView, selectedGameweek, getPlayerWithLiveData, getTeam, fixturesForSelectedGWByTeam]);
+  // Injury/suspension status helper
+  const getPlayerStatusFlag = (status: string | null, chancePlaying: number | null) => {
+    if (status === 'd') return { emoji: '🟠', label: 'Doubtful' };
+    if (status === 's') return { emoji: '🔴', label: 'Suspended' };
+    if (status === 'u') return { emoji: '❌', label: 'Unavailable' };
+    if (chancePlaying !== null && chancePlaying < 100) {
+      if (chancePlaying < 25) return { emoji: '🔴', label: `${chancePlaying}%` };
+      if (chancePlaying < 50) return { emoji: '🟠', label: `${chancePlaying}%` };
+      if (chancePlaying < 100) return { emoji: '🟡', label: `${chancePlaying}%` };
+    }
+    return null;
+  };
 
-  // Injury/suspension alerts
+  // Remove the injuryAlerts calculation - will show minimal flags instead
   const injuryAlerts = useMemo(() => {
     if (!picksForView) return [];
-    return picksForView.picks.slice(0, 11)
+    return picksForView.picks
       .map(pick => {
         const player = getPlayer(pick.element);
         if (!player) return null;
-        const chancePlaying = player.chance_of_playing_next_round;
-        const status = player.status;
-        if (chancePlaying !== null && chancePlaying < 100) {
-          return { player, chancePlaying, status };
-        }
+        const flag = getPlayerStatusFlag(player.status, player.chance_of_playing_next_round);
+        if (flag) return { player, flag };
         return null;
       })
       .filter((p): p is Exclude<typeof p, null> => p !== null);
@@ -347,46 +342,33 @@ const Team: React.FC = () => {
           </div>
         </div>
 
-        {/* Auto-Captain Suggestion */}
-        {autoCaptainSuggestion && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0">
-                <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-yellow-900 dark:text-yellow-300 text-sm">Auto-Captain Suggestion</h3>
-                <p className="text-xs text-yellow-800 dark:text-yellow-200 mt-1">
-                  <strong>{autoCaptainSuggestion.player?.web_name}</strong> ({autoCaptainSuggestion.team?.short_name}) - Form: {autoCaptainSuggestion.form} | Fixture Difficulty: {(5 - autoCaptainSuggestion.avgDifficulty).toFixed(1)}/5
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Player Status */}
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <button
+            onClick={() => navigate('/status')}
+            className="text-xs px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded transition"
+          >
+            👁️ View Status
+          </button>
+        </div>
 
         {/* Injury/Suspension Alerts */}
         {injuryAlerts.length > 0 && (
-          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <svg className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 2.523a6 6 0 008.367 8.368zm1.414-1.414A8 8 0 111.39 1.39a8 8 0 0113.501 13.501z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-red-900 dark:text-red-300 text-sm mb-2">Injury/Suspension Alerts</h3>
-                <div className="space-y-1">
-                  {injuryAlerts.map(alert => (
-                    <div key={alert.player?.id} className="text-xs text-red-800 dark:text-red-200">
-                      <strong>{alert.player?.web_name}</strong> - {alert.chancePlaying}% chance to play
-                      {alert.status === 'u' && ' (Unavailable)'}
-                      {alert.status === 'd' && ' (Doubtful)'}
-                    </div>
-                  ))}
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">⚠️</span>
+                <div>
+                  <h3 className="font-bold text-amber-900 dark:text-amber-300 text-sm">Player Status Issues</h3>
+                  <p className="text-xs text-amber-800 dark:text-amber-200">{injuryAlerts.length} player(s) flagged</p>
                 </div>
               </div>
+              <button
+                onClick={() => navigate('/status')}
+                className="text-xs px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded transition whitespace-nowrap"
+              >
+                View Details →
+              </button>
             </div>
           </div>
         )}

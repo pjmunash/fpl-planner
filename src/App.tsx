@@ -7,6 +7,7 @@ import Planner from './components/Planner';
 import Transfers from './components/Transfers';
 import Live from './components/Live';
 import Dashboard from './components/Dashboard';
+import PlayerStatus from './components/PlayerStatus';
 import PlayerComparison from './components/PlayerComparison';
 import LeagueManagement from './components/LeagueManagement';
 import Header from './components/Header';
@@ -78,6 +79,14 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute>
               <Live />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/status"
+          element={
+            <ProtectedRoute>
+              <PlayerStatus />
             </ProtectedRoute>
           }
         />
