@@ -65,17 +65,21 @@ const LeagueManagement: React.FC = () => {
       return;
     }
     
-    const leagueId = parseInt(leagueCode, 10);
-    if (isNaN(leagueId)) {
-      setError('League ID must be a number');
-      return;
-    }
+    // League codes can be numeric or alphanumeric strings
+    const leagueId = leagueCode.trim();
     
     try {
       setLoading(true);
       setError(null);
       
-      const standings = await fetchLeagueStandings(leagueId, false);
+      // Try to parse as number for the API call
+      const numericId = parseInt(leagueId, 10);
+      if (isNaN(numericId)) {
+        setError('League ID must be a valid number');
+        return;
+      }
+      
+      const standings = await fetchLeagueStandings(numericId, false);
       
       if (!standings || !standings.league) {
         setError('League not found. Please check the league ID.');
@@ -83,8 +87,8 @@ const LeagueManagement: React.FC = () => {
       }
       
       const newLeague = {
-        id: leagueId,
-        name: standings.league.name || `League ${leagueId}`,
+        id: numericId,
+        name: standings.league.name || `League ${numericId}`,
         standings: standings.standings?.results || [],
         type: 'classic',
         imported: true,
@@ -122,9 +126,19 @@ const LeagueManagement: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">League Management</h1>
-        <p className="text-gray-600 dark:text-gray-400">Track and compare your progress across all mini-leagues</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">League Management</h1>
+          <p className="text-gray-600 dark:text-gray-400">Track and compare your progress across all mini-leagues</p>
+        </div>
+        {!loading && importedLeagues.length > 0 && (
+          <button
+            onClick={syncPlayerLeagues}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition text-sm"
+          >
+            🔄 Refresh
+          </button>
+        )}
       </div>
 
       {/* Loading State */}
@@ -137,8 +151,16 @@ const LeagueManagement: React.FC = () => {
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6 flex items-center justify-between">
           <p className="text-red-800 dark:text-red-300 text-sm">{error}</p>
+          {importedLeagues.length === 0 && (
+            <button
+              onClick={syncPlayerLeagues}
+              className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-semibold transition whitespace-nowrap"
+            >
+              Retry
+            </button>
+          )}
         </div>
       )}
 
@@ -169,7 +191,7 @@ const LeagueManagement: React.FC = () => {
             </div>
 
             {/* Connected Leagues List */}
-            {importedLeagues.length > 0 && (
+            {importedLeagues.length > 0 ? (
               <div className="mt-6 space-y-2">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <span>Your Leagues</span>
@@ -192,6 +214,11 @@ const LeagueManagement: React.FC = () => {
                     )}
                   </button>
                 ))}
+              </div>
+            ) : !loading && (
+              <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+                <p className="text-sm text-gray-600 dark:text-gray-400">No leagues found</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Import a league using the form above</p>
               </div>
             )}
           </div>
