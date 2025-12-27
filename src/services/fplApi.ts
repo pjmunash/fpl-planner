@@ -1,6 +1,9 @@
 import type { FPLBootstrapData, ManagerData, ManagerPicks, Fixture } from '../types/fpl';
 
-const BASE_URL = '/api';
+// Use Vite dev proxy in development, hit official FPL API in production (GitHub Pages)
+const BASE_URL = import.meta.env?.DEV
+  ? '/api'
+  : 'https://fantasy.premierleague.com/api';
 
 class FPLApi {
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
