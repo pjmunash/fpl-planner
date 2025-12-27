@@ -18,22 +18,53 @@ class FPLApi {
       }
     }
 
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    // In production, the FPL API blocks CORS for browsers.
+    // Try a sequence of CORS-friendly mirrors if direct fetch fails.
+    const candidates: string[] = import.meta.env?.DEV
+      ? [url]
+      : [
+          url,
+          `https://cors.isomorphic-git.org/${url}`,
+          `https://corsproxy.io/?${encodeURIComponent(url)}`,
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        ];
+
+    let lastError: any = null;
+    for (const endpoint of candidates) {
+      try {
+        const response = await fetch(endpoint, { headers: { accept: 'application/json' } });
+        if (!response.ok) {
+          lastError = new Error(`HTTP error! status: ${response.status}`);
+          continue;
+        }
+
+        let data: any;
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          try {
+            data = JSON.parse(text);
+          } catch {
+            // If the proxy returned non-JSON, skip to next candidate
+            lastError = new Error('Unexpected non-JSON response');
+            continue;
+          }
+        }
+
+        if (useCache) {
+          this.cache.set(url, { data, timestamp: Date.now() });
+        }
+        return data as T;
+      } catch (error) {
+        lastError = error;
+        continue;
       }
-      const data = await response.json();
-      
-      if (useCache) {
-        this.cache.set(url, { data, timestamp: Date.now() });
-      }
-      
-      return data as T;
-    } catch (error) {
-      console.error('FPL API Error:', error);
-      throw error;
     }
+
+    console.error('FPL API Error:', lastError);
+    throw lastError || new Error('Failed to fetch FPL API');
   }
 
   async getBootstrapData(): Promise<FPLBootstrapData> {
