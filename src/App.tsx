@@ -7,9 +7,7 @@ import Planner from './components/Planner';
 import Transfers from './components/Transfers';
 import Live from './components/Live';
 import Dashboard from './components/Dashboard';
-import Analytics from './components/Analytics';
 import PlayerComparison from './components/PlayerComparison';
-import WildcardPlanner from './components/WildcardPlanner';
 import LeagueManagement from './components/LeagueManagement';
 import Header from './components/Header';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -84,26 +82,10 @@ const AppRoutes: React.FC = () => {
           }
         />
         <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute>
-              <Analytics />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/comparison"
           element={
             <ProtectedRoute>
               <PlayerComparison />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/wildcard"
-          element={
-            <ProtectedRoute>
-              <WildcardPlanner />
             </ProtectedRoute>
           }
         />

@@ -52,22 +52,10 @@ const Header: React.FC = () => {
                 Transfers
               </button>
               <button
-                onClick={() => navigate('/analytics')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
-              >
-                Analytics
-              </button>
-              <button
                 onClick={() => navigate('/comparison')}
                 className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
               >
                 Compare
-              </button>
-              <button
-                onClick={() => navigate('/wildcard')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
-              >
-                Wildcard
               </button>
               <button
                 onClick={() => navigate('/leagues')}

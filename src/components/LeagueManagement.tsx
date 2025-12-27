@@ -60,31 +60,48 @@ const LeagueManagement: React.FC = () => {
   };
 
   const handleImportLeague = async () => {
-    if (!leagueCode.trim()) return;
+    if (!leagueCode.trim()) {
+      setError('Please enter a league ID');
+      return;
+    }
+    
+    const leagueId = parseInt(leagueCode, 10);
+    if (isNaN(leagueId)) {
+      setError('League ID must be a number');
+      return;
+    }
     
     try {
       setLoading(true);
-      const standings = await fetchLeagueStandings(parseInt(leagueCode), false);
+      setError(null);
+      
+      const standings = await fetchLeagueStandings(leagueId, false);
+      
+      if (!standings || !standings.league) {
+        setError('League not found. Please check the league ID.');
+        return;
+      }
       
       const newLeague = {
-        id: parseInt(leagueCode),
-        name: standings.league?.name || `League ${leagueCode}`,
+        id: leagueId,
+        name: standings.league.name || `League ${leagueId}`,
         standings: standings.standings?.results || [],
         type: 'classic',
         imported: true,
       };
       
-      if (!importedLeagues.find(l => l.id === newLeague.id)) {
-        setImportedLeagues([...importedLeagues, newLeague]);
-        setSelectedLeague(newLeague);
-        setLeagueCode('');
-        setError(null);
-      } else {
+      if (importedLeagues.find(l => l.id === newLeague.id)) {
         setError('This league is already imported.');
+        return;
       }
-    } catch (err) {
+      
+      setImportedLeagues([...importedLeagues, newLeague]);
+      setSelectedLeague(newLeague);
+      setLeagueCode('');
+    } catch (err: any) {
       console.error('Failed to import league:', err);
-      setError('Invalid league code or unable to fetch league data.');
+      const errorMsg = err?.message || 'Unable to fetch league data';
+      setError(`Failed to import league: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
