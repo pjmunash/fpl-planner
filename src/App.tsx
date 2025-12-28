@@ -11,6 +11,7 @@ import PlayerStatus from './components/PlayerStatus';
 import PlayerComparison from './components/PlayerComparison';
 import LeagueManagement from './components/LeagueManagement';
 import Header from './components/Header';
+import Footer from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -28,6 +29,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     <>
       <Header />
       {children}
+      <Footer />
     </>
   );
 };

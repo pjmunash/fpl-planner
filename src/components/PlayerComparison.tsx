@@ -225,6 +225,18 @@ const PlayerComparison: React.FC = () => {
                             <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.minutes}</td>
                           ))}
                         </tr>
+                        <tr className="bg-gray-50 dark:bg-gray-700/50">
+                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Goals</td>
+                          {comparedPlayers.map(p => (
+                            <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200 font-bold">{p.goals_scored || 0}</td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Assists</td>
+                          {comparedPlayers.map(p => (
+                            <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200 font-bold">{p.assists || 0}</td>
+                          ))}
+                        </tr>
                       </tbody>
                     </table>
                   </div>

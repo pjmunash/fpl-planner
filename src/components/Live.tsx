@@ -19,31 +19,6 @@ const Live: React.FC = () => {
     return bootstrapData?.events.find(e => e.is_current)?.id || 1;
   }, [bootstrapData]);
 
-  // Starting XI for current GW
-  const startingXIBasic = useMemo(() => {
-    return currentPicks?.picks.slice(0, 11) || [];
-  }, [currentPicks]);
-
-  // Captain analysis
-  const captainAnalysis = useMemo(() => {
-    if (!startingXIBasic || !bootstrapData) return null;
-    const captainPick = currentPicks?.picks.find(p => p.is_captain);
-    if (!captainPick) return null;
-    const captain = getPlayerWithLiveData(captainPick.element, currentGW);
-    if (!captain) return null;
-    
-    const captainPoints = (captain.event_points || 0) * 2;
-    const noCapPoints = captain.event_points || 0;
-    const captainDiff = captainPoints - noCapPoints;
-    
-    return {
-      captain,
-      team: getTeam((captain.team || 1) as number),
-      captainPoints,
-      captainDiff,
-    };
-  }, [startingXIBasic, bootstrapData, currentPicks, currentGW, getPlayerWithLiveData, getTeam]);
-
   // Current GW stats - get picks for current GW
   const currentGWPicks = useMemo(() => {
     if (!currentGW) return currentPicks;
@@ -263,15 +238,15 @@ const Live: React.FC = () => {
           </div>
 
           {/* Current GW Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
-              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Overall Rank</div>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mt-6">
+            <div className="bg-purple-50 dark:bg-purple-900/30 px-3 py-3 sm:p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+              <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-1">Overall Rank</div>
               <div className="flex items-center gap-2">
-                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-purple-600 dark:text-purple-400 truncate">
                   {gwStats?.overall_rank?.toLocaleString() || managerData?.summary_overall_rank?.toLocaleString() || '-'}
                 </div>
                 {rankChange !== 0 && (
-                  <div className={`text-sm font-semibold ${
+                  <div className={`text-xs sm:text-sm font-semibold ${
                     rankChange > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                   }`}>
                     {rankChange > 0 ? '↑' : '↓'} {Math.abs(rankChange).toLocaleString()}
@@ -280,31 +255,17 @@ const Live: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">GW Rank</div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="bg-blue-50 dark:bg-blue-900/30 px-3 py-3 sm:p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-1">GW Rank</div>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400 truncate">
                 {gwStats?.rank?.toLocaleString() || '-'}
               </div>
             </div>
 
-            <div className="bg-orange-50 dark:bg-orange-900/30 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
-              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Total Points</div>
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{overallTotalPoints.toLocaleString()}</div>
+            <div className="bg-orange-50 dark:bg-orange-900/30 px-3 py-3 sm:p-4 rounded-lg border border-orange-200 dark:border-orange-800">
+              <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-1">Total Points</div>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-orange-600 dark:text-orange-400 truncate">{overallTotalPoints.toLocaleString()}</div>
             </div>
-
-            {/* Captain Differential */}
-            {captainAnalysis && (
-              <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Captain Bonus</div>
-                <div className="flex items-center gap-2">
-                  <img src={getTeamShirtUrl(captainAnalysis.team?.code || 0, false)} alt="" className="w-5 h-5 object-contain" />
-                  <div>
-                    <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">{captainAnalysis.captain?.web_name}</div>
-                    <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">+{captainAnalysis.captainDiff}</div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
