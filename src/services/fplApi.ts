@@ -1,7 +1,8 @@
 import type { FPLBootstrapData, ManagerData, ManagerPicks, Fixture } from '../types/fpl';
 
-// In development, use Vite proxy. In production on GitHub Pages, use local proxy or direct API
-const BASE_URL = import.meta.env?.DEV ? '/api' : '/api';
+// Prefer an explicit proxy URL in production. In dev, use Vite proxy.
+const PROD_BASE = (import.meta.env as any)?.VITE_FPL_PROXY_URL || 'https://fantasy.premierleague.com/api';
+const BASE_URL = import.meta.env?.DEV ? '/api' : PROD_BASE;
 
 class FPLApi {
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
@@ -17,18 +18,38 @@ class FPLApi {
     }
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { headers: { accept: 'application/json' } });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      
+
       if (useCache) {
         this.cache.set(url, { data, timestamp: Date.now() });
       }
-      
+
       return data as T;
     } catch (error) {
+      // If production and direct FPL API blocks CORS, try simple CORS proxies
+      const isProd = !import.meta.env?.DEV;
+      const directToFPL = BASE_URL.startsWith('https://fantasy.premierleague.com');
+      if (isProd && directToFPL) {
+        const proxied = [
+          `https://cors.isomorphic-git.org/${url}`,
+          `https://corsproxy.io/?${encodeURIComponent(url)}`,
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        ];
+        for (const p of proxied) {
+          try {
+            const r = await fetch(p, { headers: { accept: 'application/json' } });
+            if (!r.ok) continue;
+            const text = await r.text();
+            const data = JSON.parse(text);
+            if (useCache) this.cache.set(url, { data, timestamp: Date.now() });
+            return data as T;
+          } catch {}
+        }
+      }
       console.error('FPL API Error:', error);
       throw error;
     }
