@@ -1,16 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFPL } from '../context/FPLContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
 const Header: React.FC = () => {
   const { managerData, disconnect, refreshData, loading } = useFPL();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleDisconnect = () => {
     disconnect();
     navigate('/login');
+  };
+
+  const navItems = [
+    { path: '/team', label: 'Team' },
+    { path: '/live', label: 'Live' },
+    { path: '/planner', label: 'Planner' },
+    { path: '/transfers', label: 'Transfers' },
+    { path: '/status', label: 'Status' },
+    { path: '/comparison', label: 'Compare' },
+    { path: '/leagues', label: 'Leagues' },
+  ];
+
+  const currentPage = navItems.find(item => location.pathname === item.path)?.label || 'Menu';
+
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    setMobileMenuOpen(false);
   };
 
   if (!managerData) return null;
@@ -27,49 +46,62 @@ const Header: React.FC = () => {
               FPL Planner
             </h1>
             <nav className="hidden md:flex gap-4">
-              <button
-                onClick={() => navigate('/team')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
-              >
-                Team
-              </button>
-              <button
-                onClick={() => navigate('/live')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
-              >
-                Live
-              </button>
-              <button
-                onClick={() => navigate('/planner')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
-              >
-                Planner
-              </button>
-              <button
-                onClick={() => navigate('/transfers')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
-              >
-                Transfers
-              </button>
-              <button
-                onClick={() => navigate('/status')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
-              >
-                Status
-              </button>
-              <button
-                onClick={() => navigate('/comparison')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
-              >
-                Compare
-              </button>
-              <button
-                onClick={() => navigate('/leagues')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
-              >
-                Leagues
-              </button>
+              {navItems.map(item => (
+                <button
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
+                  className={`font-medium transition ${
+                    location.pathname === item.path
+                      ? 'text-purple-600 dark:text-purple-400'
+                      : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
             </nav>
+
+            {/* Mobile Navigation Dropdown */}
+            <div className="md:hidden relative">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition"
+              >
+                <span>{currentPage}</span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {mobileMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setMobileMenuOpen(false)}
+                  />
+                  <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    {navItems.map(item => (
+                      <button
+                        key={item.path}
+                        onClick={() => handleNavClick(item.path)}
+                        className={`w-full text-left px-4 py-2 transition ${
+                          location.pathname === item.path
+                            ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-medium'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
