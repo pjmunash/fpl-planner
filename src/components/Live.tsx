@@ -128,6 +128,8 @@ const Live: React.FC = () => {
       stats.push({ label: 'goals', value: player.goals_scored || 0 });
       stats.push({ label: 'assists', value: player.assists || 0 });
       if (player.clean_sheets) stats.push({ label: 'clean sheet', value: 1 });
+      if (player.tackles) stats.push({ label: 'tackles', value: player.tackles });
+      if (player.interceptions) stats.push({ label: 'interceptions', value: player.interceptions });
       if (player.yellow_cards) stats.push({ label: 'yellow', value: player.yellow_cards });
       if (player.red_cards) stats.push({ label: 'red', value: player.red_cards });
       if (player.own_goals) stats.push({ label: 'own goals', value: player.own_goals });
