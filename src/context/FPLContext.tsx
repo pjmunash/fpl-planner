@@ -47,7 +47,7 @@ interface FPLContextType {
   getPicksForGameweek: (gw: number) => ManagerPicks | null;
   getFinancialStatus: (gw: number) => { bank: number; squadValue: number; totalBudget: number };
   fetchPlayerLeagues: (teamId: number) => Promise<any>;
-  fetchLeagueStandings: (leagueId: number, isHeadToHead?: boolean) => Promise<any>;
+  fetchLeagueStandings: (leagueId: number, pageNumber?: number, isHeadToHead?: boolean) => Promise<any>;
 }
 
 const FPLContext = createContext<FPLContextType | undefined>(undefined);
@@ -372,11 +372,11 @@ export const FPLProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const fetchLeagueStandings = async (leagueId: number, isHeadToHead = false) => {
+  const fetchLeagueStandings = async (leagueId: number, pageNumber = 1, isHeadToHead = false) => {
     try {
       const standings = isHeadToHead 
-        ? await fplApi.getHeadToHeadLeagueStandings(leagueId)
-        : await fplApi.getLeagueStandings(leagueId);
+        ? await fplApi.getHeadToHeadLeagueStandings(leagueId, pageNumber)
+        : await fplApi.getLeagueStandings(leagueId, pageNumber);
       return standings;
     } catch (err) {
       console.error('Failed to fetch league standings:', err);

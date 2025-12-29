@@ -25,8 +25,16 @@ const LeagueManagement: React.FC = () => {
       const leaguesWithStandings = await Promise.all(
         leagues.map(async (league: any) => {
           try {
-            const standings = await fetchLeagueStandings(league.id, false);
-            return { ...league, standings: standings.standings?.results || [], type: 'classic' };
+            const standings = await fetchLeagueStandings(league.id, 1, false);
+            return {
+              ...league,
+              standings: standings.standings?.results || [],
+              pagination: {
+                page: standings.standings?.page || 1,
+                hasNext: !!standings.standings?.has_next,
+              },
+              type: 'classic',
+            };
           } catch {
             return { ...league, standings: [], type: 'classic' };
           }
@@ -47,12 +55,16 @@ const LeagueManagement: React.FC = () => {
     if (isNaN(numericId)) { setError('League ID must be a valid number'); return; }
     try {
       setLoading(true); setError(null);
-      const standings = await fetchLeagueStandings(numericId, false);
+      const standings = await fetchLeagueStandings(numericId, 1, false);
       if (!standings || !standings.league) { setError('League not found.'); return; }
       const newLeague = {
         id: numericId,
         name: standings.league.name || `League ${numericId}`,
         standings: standings.standings?.results || [],
+        pagination: {
+          page: standings.standings?.page || 1,
+          hasNext: !!standings.standings?.has_next,
+        },
         type: 'classic', imported: true,
       };
       if (importedLeagues.find(l => l.id === newLeague.id)) { setError('This league is already imported.'); return; }
@@ -60,6 +72,29 @@ const LeagueManagement: React.FC = () => {
     } catch (err: any) {
       setError(`Failed to import league: ${err?.message || 'Unknown error'}`);
     } finally { setLoading(false); }
+  };
+
+  const loadMoreStandings = async () => {
+    if (!selectedLeague) return;
+    const nextPage = (selectedLeague.pagination?.page || 1) + 1;
+    try {
+      setLoading(true);
+      const resp = await fetchLeagueStandings(selectedLeague.id, nextPage, false);
+      const newResults = resp.standings?.results || [];
+      const hasNext = !!resp.standings?.has_next;
+      const page = resp.standings?.page || nextPage;
+      const updated = {
+        ...selectedLeague,
+        standings: [...(selectedLeague.standings || []), ...newResults],
+        pagination: { page, hasNext },
+      };
+      setSelectedLeague(updated);
+      setImportedLeagues(prev => prev.map(l => (l.id === updated.id ? updated : l)));
+    } catch (err) {
+      setError('Failed to load more standings');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -170,6 +205,16 @@ const LeagueManagement: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
+                    {selectedLeague.pagination?.hasNext && (
+                      <div className="mt-4 flex justify-center">
+                        <button
+                          onClick={loadMoreStandings}
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition text-sm"
+                        >
+                          Load More
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">No standings available</div>
