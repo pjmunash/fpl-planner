@@ -132,6 +132,44 @@ const PlayerComparison: React.FC = () => {
       .filter((p): p is any => p !== null);
   }, [selectedPlayers, getPlayer, getTeam, playerHistories, startGW, endGW]);
 
+  const statExtremes = useMemo(() => {
+    const keys: Array<{ key: string; inverse?: boolean; path: (p: any) => number }> = [
+      { key: 'points', path: p => p.gwStats.points },
+      { key: 'minutes', path: p => p.gwStats.minutes },
+      { key: 'goals', path: p => p.gwStats.goals },
+      { key: 'assists', path: p => p.gwStats.assists },
+      { key: 'xG', path: p => p.gwStats.xG },
+      { key: 'xA', path: p => p.gwStats.xA },
+      { key: 'bonus', path: p => p.gwStats.bonus },
+      { key: 'ppm', path: p => parseFloat(p.ppm) },
+      { key: 'form', path: p => parseFloat(p.form || '0') },
+      { key: 'xGA', path: p => p.gwStats.xGA, inverse: true },
+      { key: 'sotFaced', path: p => p.gwStats.sotFaced, inverse: true },
+      { key: 'saves', path: p => p.gwStats.saves },
+      { key: 'goalsConceded', path: p => p.gwStats.goalsConceded, inverse: true },
+    ];
+
+    const extremes: Record<string, { min: number; max: number; inverse?: boolean }> = {};
+    keys.forEach(({ key, inverse, path }) => {
+      const values = comparedPlayers.map(path).filter(v => typeof v === 'number' && !Number.isNaN(v));
+      if (values.length === 0) return;
+      extremes[key] = { min: Math.min(...values), max: Math.max(...values), inverse };
+    });
+    return extremes;
+  }, [comparedPlayers]);
+
+  const getStatClass = (key: string, value: number) => {
+    const ext = statExtremes[key];
+    if (!ext) return 'text-gray-800 dark:text-gray-200';
+    const { min, max, inverse } = ext;
+    const best = inverse ? min : max;
+    const worst = inverse ? max : min;
+    if (max === min) return 'text-gray-800 dark:text-gray-200';
+    if (value === best) return 'text-green-600 dark:text-green-400 font-semibold';
+    if (value === worst) return 'text-red-600 dark:text-red-400';
+    return 'text-gray-800 dark:text-gray-200';
+  };
+
   const togglePlayerSelection = (playerId: number) => {
     if (selectedPlayers.includes(playerId)) {
       setSelectedPlayers(selectedPlayers.filter(id => id !== playerId));
@@ -276,59 +314,59 @@ const PlayerComparison: React.FC = () => {
                       </div>
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">GW {startGW}-{endGW} Points</span>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.points}</span>
+                        <span className={getStatClass('points', player.gwStats.points)}>{player.gwStats.points}</span>
                       </div>
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">PPM</span>
-                        <span className="font-semibold text-purple-600 dark:text-purple-400">{player.ppm}</span>
+                        <span className={`${getStatClass('ppm', parseFloat(player.ppm))} text-purple-600 dark:text-purple-400`}>{player.ppm}</span>
                       </div>
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">Form</span>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.form}</span>
+                        <span className={getStatClass('form', parseFloat(player.form || '0'))}>{player.form}</span>
                       </div>
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">Minutes (GW Range)</span>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.minutes}</span>
+                        <span className={getStatClass('minutes', player.gwStats.minutes)}>{player.gwStats.minutes}</span>
                       </div>
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">Goals (GW Range)</span>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.goals}</span>
+                        <span className={getStatClass('goals', player.gwStats.goals)}>{player.gwStats.goals}</span>
                       </div>
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">Assists (GW Range)</span>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.assists}</span>
+                        <span className={getStatClass('assists', player.gwStats.assists)}>{player.gwStats.assists}</span>
                       </div>
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">xG (GW Range)</span>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.xG.toFixed(2)}</span>
+                        <span className={getStatClass('xG', player.gwStats.xG)}>{player.gwStats.xG.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">xA (GW Range)</span>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.xA.toFixed(2)}</span>
+                        <span className={getStatClass('xA', player.gwStats.xA)}>{player.gwStats.xA.toFixed(2)}</span>
                       </div>
                       {player.element_type === 1 && (
                         <>
                           <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                             <span className="text-gray-600 dark:text-gray-400">xG Against (GW Range)</span>
-                            <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.xGA.toFixed(2)}</span>
+                            <span className={getStatClass('xGA', player.gwStats.xGA)}>{player.gwStats.xGA.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                             <span className="text-gray-600 dark:text-gray-400">Shots on Target Faced</span>
-                            <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.sotFaced}</span>
+                            <span className={getStatClass('sotFaced', player.gwStats.sotFaced)}>{player.gwStats.sotFaced}</span>
                           </div>
                           <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                             <span className="text-gray-600 dark:text-gray-400">Saves</span>
-                            <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.saves}</span>
+                            <span className={getStatClass('saves', player.gwStats.saves)}>{player.gwStats.saves}</span>
                           </div>
                           <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                             <span className="text-gray-600 dark:text-gray-400">Goals Conceded</span>
-                            <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.goalsConceded}</span>
+                            <span className={getStatClass('goalsConceded', player.gwStats.goalsConceded)}>{player.gwStats.goalsConceded}</span>
                           </div>
                         </>
                       )}
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">Bonus (GW Range)</span>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.bonus}</span>
+                        <span className={getStatClass('bonus', player.gwStats.bonus)}>{player.gwStats.bonus}</span>
                       </div>
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">Selected By</span>
