@@ -72,6 +72,14 @@ const Team: React.FC = () => {
     return getFinancialStatus(selectedGameweek || 1);
   }, [selectedGameweek, getFinancialStatus]);
 
+  const getAvailabilityClass = (chance: number | null | undefined) => {
+    if (chance === null || chance === undefined) return '';
+    if (chance <= 25) return 'bg-red-200 text-red-900 dark:bg-red-900/60 dark:text-red-100';
+    if (chance <= 50) return 'bg-orange-200 text-orange-900 dark:bg-orange-900/60 dark:text-orange-100';
+    if (chance <= 75) return 'bg-yellow-200 text-yellow-900 dark:bg-yellow-900/60 dark:text-yellow-100';
+    return '';
+  };
+
   // Calculate total points from starting XI (or all 15 if bench boost) including captain multiplier
   const totalPoints = useMemo(() => {
     if (!picksForView || !selectedGameweek) return 0;
@@ -192,8 +200,10 @@ const Team: React.FC = () => {
               <div className="w-full flex flex-col gap-0.5 px-0.5 py-0.5 bg-gray-50 dark:bg-gray-700">
                 {teamFixtures.map((fx, i) => {
                   const opp = getTeam(fx.opponent);
+                  const availabilityClass = getAvailabilityClass(player.chance_of_playing_next_round);
+                  const chipClass = availabilityClass || `${getDifficultyColor(fx.difficulty)} text-white`;
                   return (
-                    <span key={i} className={`block w-full text-[7px] px-1 py-0.5 rounded ${getDifficultyColor(fx.difficulty)} text-white text-center`}>
+                    <span key={i} className={`block w-full text-[7px] px-1 py-0.5 rounded text-center ${chipClass}`}>
                       {fx.isHome ? 'vs' : '@'} {opp?.short_name}
                     </span>
                   );
@@ -245,8 +255,10 @@ const Team: React.FC = () => {
             ) : (
               teamFixtures.slice(0, 2).map((fx, i) => {
                 const opp = getTeam(fx.opponent);
+                const availabilityClass = getAvailabilityClass(player.chance_of_playing_next_round);
+                const chipClass = availabilityClass || `${getDifficultyColor(fx.difficulty)} text-white`;
                 return (
-                  <span key={i} className={`text-[9px] px-1 py-0.5 rounded ${getDifficultyColor(fx.difficulty)} text-white`}>
+                  <span key={i} className={`text-[9px] px-1 py-0.5 rounded ${chipClass}`}>
                     {fx.isHome ? 'vs' : '@'} {opp?.short_name}
                   </span>
                 );
@@ -340,16 +352,6 @@ const Team: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Player Status */}
-        <div className="flex items-center justify-center gap-2 mt-4">
-          <button
-            onClick={() => navigate('/status')}
-            className="text-xs px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded transition"
-          >
-            👁️ View Status
-          </button>
         </div>
 
         {/* Injury/Suspension Alerts */}
