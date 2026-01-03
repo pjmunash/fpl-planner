@@ -152,6 +152,16 @@ const Header: React.FC = () => {
             </button>
 
             <button
+              onClick={() => window.location.reload()}
+              className="p-2 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition"
+              title="Refresh site"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.93 4.93a10 10 0 0114.14 0M19.07 19.07a10 10 0 01-14.14 0M4 4v4m0-4h4M20 20v-4m0 4h-4" />
+              </svg>
+            </button>
+
+            <button
               onClick={handleDisconnect}
               className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm font-medium"
             >
