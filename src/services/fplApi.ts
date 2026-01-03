@@ -104,6 +104,10 @@ class FPLApi {
     return this.fetchWithCache(`${BASE_URL}/leagues-h2h/${leagueId}/standings/?page_standings=${pageNumber}`, false);
   }
 
+  async getPlayerHistory(playerId: number): Promise<any> {
+    return this.fetchWithCache(`${BASE_URL}/element-summary/${playerId}/`, false);
+  }
+
   clearCache(): void {
     this.cache.clear();
   }
