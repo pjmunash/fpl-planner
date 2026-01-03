@@ -115,19 +115,24 @@ const PlayerComparison: React.FC = () => {
           assists: acc.assists + gw.assists,
           xG: acc.xG + parseFloat(gw.expected_goals || '0'),
           xA: acc.xA + parseFloat(gw.expected_assists || '0'),
+          xGA: acc.xGA + parseFloat(gw.expected_goals_conceded || '0'),
+          saves: acc.saves + (gw.saves || 0),
+          goalsConceded: acc.goalsConceded + (gw.goals_conceded || 0),
           bonus: acc.bonus + gw.bonus,
-        }), { points: 0, minutes: 0, goals: 0, assists: 0, xG: 0, xA: 0, bonus: 0 });
+        }), { points: 0, minutes: 0, goals: 0, assists: 0, xG: 0, xA: 0, xGA: 0, saves: 0, goalsConceded: 0, bonus: 0 });
 
         return {
           ...player,
           team: getTeam(player.team),
           ppm: (player.total_points / (player.now_cost / 10)).toFixed(2),
-          gwStats,
+          gwStats: { ...gwStats, sotFaced: gwStats.saves + gwStats.goalsConceded },
           gwCount: gwHistory.length,
         };
       })
       .filter((p): p is any => p !== null);
   }, [selectedPlayers, getPlayer, getTeam, playerHistories, startGW, endGW]);
+
+  const hasKeeper = useMemo(() => comparedPlayers.some(p => p.element_type === 1), [comparedPlayers]);
 
   const togglePlayerSelection = (playerId: number) => {
     if (selectedPlayers.includes(playerId)) {
@@ -295,6 +300,26 @@ const PlayerComparison: React.FC = () => {
                         <span className="text-gray-600 dark:text-gray-400">Assists (GW Range)</span>
                         <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.assists}</span>
                       </div>
+                      {player.element_type === 1 && (
+                        <>
+                          <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+                            <span className="text-gray-600 dark:text-gray-400">xG Against (GW Range)</span>
+                            <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.xGA.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+                            <span className="text-gray-600 dark:text-gray-400">Shots on Target Faced</span>
+                            <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.sotFaced}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+                            <span className="text-gray-600 dark:text-gray-400">Saves</span>
+                            <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.saves}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+                            <span className="text-gray-600 dark:text-gray-400">Goals Conceded</span>
+                            <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.goalsConceded}</span>
+                          </div>
+                        </>
+                      )}
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">Selected By</span>
                         <span className="font-semibold text-gray-800 dark:text-gray-200">{((player.selected_by_percent || 0) * 100).toFixed(1)}%</span>
@@ -386,6 +411,34 @@ const PlayerComparison: React.FC = () => {
                             <td key={p.id} className="px-4 py-2 text-center text-green-600 dark:text-green-400 font-bold">{p.gwStats.xA.toFixed(2)}</td>
                           ))}
                         </tr>
+                        {hasKeeper && (
+                          <>
+                            <tr className="bg-gray-50 dark:bg-gray-700/50">
+                              <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">xG Against (GW Range)</td>
+                              {comparedPlayers.map(p => (
+                                <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.element_type === 1 ? p.gwStats.xGA.toFixed(2) : '—'}</td>
+                              ))}
+                            </tr>
+                            <tr>
+                              <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Shots on Target Faced</td>
+                              {comparedPlayers.map(p => (
+                                <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.element_type === 1 ? p.gwStats.sotFaced : '—'}</td>
+                              ))}
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700/50">
+                              <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Saves</td>
+                              {comparedPlayers.map(p => (
+                                <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.element_type === 1 ? p.gwStats.saves : '—'}</td>
+                              ))}
+                            </tr>
+                            <tr>
+                              <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Goals Conceded</td>
+                              {comparedPlayers.map(p => (
+                                <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.element_type === 1 ? p.gwStats.goalsConceded : '—'}</td>
+                              ))}
+                            </tr>
+                          </>
+                        )}
                         <tr className="bg-gray-50 dark:bg-gray-700/50">
                           <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Bonus (GW Range)</td>
                           {comparedPlayers.map(p => (
