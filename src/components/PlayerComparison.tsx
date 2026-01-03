@@ -132,8 +132,6 @@ const PlayerComparison: React.FC = () => {
       .filter((p): p is any => p !== null);
   }, [selectedPlayers, getPlayer, getTeam, playerHistories, startGW, endGW]);
 
-  const hasKeeper = useMemo(() => comparedPlayers.some(p => p.element_type === 1), [comparedPlayers]);
-
   const togglePlayerSelection = (playerId: number) => {
     if (selectedPlayers.includes(playerId)) {
       setSelectedPlayers(selectedPlayers.filter(id => id !== playerId));
@@ -300,6 +298,14 @@ const PlayerComparison: React.FC = () => {
                         <span className="text-gray-600 dark:text-gray-400">Assists (GW Range)</span>
                         <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.assists}</span>
                       </div>
+                      <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+                        <span className="text-gray-600 dark:text-gray-400">xG (GW Range)</span>
+                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.xG.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+                        <span className="text-gray-600 dark:text-gray-400">xA (GW Range)</span>
+                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.xA.toFixed(2)}</span>
+                      </div>
                       {player.element_type === 1 && (
                         <>
                           <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
@@ -321,6 +327,10 @@ const PlayerComparison: React.FC = () => {
                         </>
                       )}
                       <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+                        <span className="text-gray-600 dark:text-gray-400">Bonus (GW Range)</span>
+                        <span className="font-semibold text-gray-800 dark:text-gray-200">{player.gwStats.bonus}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-600 dark:text-gray-400">Selected By</span>
                         <span className="font-semibold text-gray-800 dark:text-gray-200">{((player.selected_by_percent || 0) * 100).toFixed(1)}%</span>
                       </div>
@@ -337,119 +347,6 @@ const PlayerComparison: React.FC = () => {
                 ))}
               </div>
 
-              {/* Stat Comparison Table */}
-              {comparedPlayers.length > 1 && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
-                        <tr>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Stat</th>
-                          {comparedPlayers.map(p => (
-                            <th key={p.id} className="px-4 py-2 text-center font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">{p.web_name}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        <tr className="bg-gray-50 dark:bg-gray-700/50">
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Price</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{formatPrice(p.now_cost)}</td>
-                          ))}
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">GW {startGW}-{endGW} Points</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200 font-bold">{p.gwStats.points}</td>
-                          ))}
-                        </tr>
-                        <tr className="bg-gray-50 dark:bg-gray-700/50">
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">PPM (Season)</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-purple-600 dark:text-purple-400 font-bold">{p.ppm}</td>
-                          ))}
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Ownership</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{((p.selected_by_percent || 0) * 100).toFixed(1)}%</td>
-                          ))}
-                        </tr>
-                        <tr className="bg-gray-50 dark:bg-gray-700/50">
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Form</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.form}</td>
-                          ))}
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Minutes (GW Range)</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.gwStats.minutes}</td>
-                          ))}
-                        </tr>
-                        <tr className="bg-gray-50 dark:bg-gray-700/50">
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Goals (GW Range)</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200 font-bold">{p.gwStats.goals}</td>
-                          ))}
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Assists (GW Range)</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200 font-bold">{p.gwStats.assists}</td>
-                          ))}
-                        </tr>
-                        <tr className="bg-gray-50 dark:bg-gray-700/50">
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">xG (GW Range)</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-blue-600 dark:text-blue-400 font-bold">{p.gwStats.xG.toFixed(2)}</td>
-                          ))}
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">xA (GW Range)</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-green-600 dark:text-green-400 font-bold">{p.gwStats.xA.toFixed(2)}</td>
-                          ))}
-                        </tr>
-                        {hasKeeper && (
-                          <>
-                            <tr className="bg-gray-50 dark:bg-gray-700/50">
-                              <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">xG Against (GW Range)</td>
-                              {comparedPlayers.map(p => (
-                                <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.element_type === 1 ? p.gwStats.xGA.toFixed(2) : '—'}</td>
-                              ))}
-                            </tr>
-                            <tr>
-                              <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Shots on Target Faced</td>
-                              {comparedPlayers.map(p => (
-                                <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.element_type === 1 ? p.gwStats.sotFaced : '—'}</td>
-                              ))}
-                            </tr>
-                            <tr className="bg-gray-50 dark:bg-gray-700/50">
-                              <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Saves</td>
-                              {comparedPlayers.map(p => (
-                                <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.element_type === 1 ? p.gwStats.saves : '—'}</td>
-                              ))}
-                            </tr>
-                            <tr>
-                              <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Goals Conceded</td>
-                              {comparedPlayers.map(p => (
-                                <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.element_type === 1 ? p.gwStats.goalsConceded : '—'}</td>
-                              ))}
-                            </tr>
-                          </>
-                        )}
-                        <tr className="bg-gray-50 dark:bg-gray-700/50">
-                          <td className="px-4 py-2 font-semibold text-gray-800 dark:text-gray-200">Bonus (GW Range)</td>
-                          {comparedPlayers.map(p => (
-                            <td key={p.id} className="px-4 py-2 text-center text-gray-800 dark:text-gray-200">{p.gwStats.bonus}</td>
-                          ))}
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>

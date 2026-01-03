@@ -20,7 +20,7 @@ const Header: React.FC = () => {
     { path: '/live', label: 'Live' },
     { path: '/planner', label: 'Planner' },
     { path: '/transfers', label: 'Transfers' },
-    { path: '/status', label: 'Status' },
+    { path: '/status', label: 'Availability' },
     { path: '/comparison', label: 'Compare' },
     { path: '/leagues', label: 'Leagues' },
   ];
