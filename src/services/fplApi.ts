@@ -1,7 +1,9 @@
 import type { FPLBootstrapData, ManagerData, ManagerPicks, Fixture } from '../types/fpl';
 
-// Prefer an explicit proxy URL in production. In dev, use Vite proxy.
-const PROD_BASE = (import.meta.env as any)?.VITE_FPL_PROXY_URL || 'https://fantasy.premierleague.com/api';
+// Prefer an explicit proxy URL in production. Default to a permissive CORS proxy if none is provided.
+const PROD_FPL_BASE = 'https://fantasy.premierleague.com/api';
+const DEFAULT_PROXY_BASE = 'https://cors.isteed.cc/https://fantasy.premierleague.com/api';
+const PROD_BASE = (import.meta.env as any)?.VITE_FPL_PROXY_URL || DEFAULT_PROXY_BASE;
 const BASE_URL = import.meta.env?.DEV ? '/api' : PROD_BASE;
 
 class FPLApi {
@@ -30,24 +32,35 @@ class FPLApi {
 
       return data as T;
     } catch (error) {
-      // If production and direct FPL API blocks CORS, try simple CORS proxies
+      // If production and the request failed (likely CORS), try a few permissive proxies against the raw FPL URL
       const isProd = !import.meta.env?.DEV;
-      const directToFPL = BASE_URL.startsWith('https://fantasy.premierleague.com');
-      if (isProd && directToFPL) {
-        const proxied = [
-          `https://cors.isomorphic-git.org/${url}`,
-          `https://corsproxy.io/?${encodeURIComponent(url)}`,
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-        ];
-        for (const p of proxied) {
+      if (isProd) {
+        const directTarget = (() => {
           try {
-            const r = await fetch(p, { headers: { accept: 'application/json' } });
-            if (!r.ok) continue;
-            const text = await r.text();
-            const data = JSON.parse(text);
-            if (useCache) this.cache.set(url, { data, timestamp: Date.now() });
-            return data as T;
-          } catch {}
+            const parsed = new URL(url);
+            return `${PROD_FPL_BASE}${parsed.pathname}${parsed.search}`;
+          } catch {
+            return null;
+          }
+        })();
+
+        if (directTarget) {
+          const proxied = [
+            `https://cors.isteed.cc/${directTarget}`,
+            `https://corsproxy.io/?${encodeURIComponent(directTarget)}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(directTarget)}`,
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(directTarget)}`,
+          ];
+          for (const p of proxied) {
+            try {
+              const r = await fetch(p, { headers: { accept: 'application/json' } });
+              if (!r.ok) continue;
+              const text = await r.text();
+              const data = JSON.parse(text);
+              if (useCache) this.cache.set(url, { data, timestamp: Date.now() });
+              return data as T;
+            } catch {}
+          }
         }
       }
       console.error('FPL API Error:', error);
